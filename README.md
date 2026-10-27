@@ -68,3 +68,12 @@ El esquema de ejemplo es deliberadamente pequeño. La validación de email es si
 ## Licencia
 
 MIT. Consultá [LICENSE](LICENSE).
+
+
+## CLI error codes
+
+- `0`: all rows pass the schema.
+- `1`: at least one row fails validation; reports are still generated.
+- `2`: input/configuration error (missing file, unsupported format, malformed file, or invalid sheet). The CLI prints a concise message to stderr.
+
+The row-by-row recovery path normalizes integral numeric values for `customer_id` and `age` before validating each row. This prevents one malformed value from changing a whole CSV column to text and incorrectly discarding otherwise valid integer rows.

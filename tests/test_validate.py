@@ -98,3 +98,43 @@ def test_cli_returns_zero_when_dataset_passes_validation(
     )
 
     assert main() == 0
+
+
+def test_valid_integer_rows_survive_mixed_numeric_and_invalid_ids(tmp_path: Path) -> None:
+    source = tmp_path / "mixed_ids.csv"
+    output = tmp_path / "outputs"
+    valid = _valid_customer()
+    invalid = {**_valid_customer(), "customer_id": "not-an-integer"}
+    _write_csv(source, [valid, invalid])
+
+    assert run_validation(str(source), 0, str(output)) is False
+    cleaned = pd.read_excel(output / "cleaned.xlsx")
+    assert cleaned["customer_id"].tolist() == [1]
+
+
+def test_cli_returns_two_and_prints_clear_error_for_missing_input(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    missing = tmp_path / "missing.csv"
+    monkeypatch.setattr(
+        "sys.argv",
+        ["dq_suite", "run", "--input", str(missing), "--out", str(tmp_path / "out")],
+    )
+
+    assert main() == 2
+    captured = capsys.readouterr()
+    assert "ERROR: Input file not found" in captured.err
+
+
+def test_cli_returns_two_for_unsupported_file_type(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    source = tmp_path / "customers.json"
+    source.write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(
+        "sys.argv",
+        ["dq_suite", "run", "--input", str(source), "--out", str(tmp_path / "out")],
+    )
+
+    assert main() == 2
+    assert "CSV or Excel" in capsys.readouterr().err

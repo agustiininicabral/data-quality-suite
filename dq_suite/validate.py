@@ -39,14 +39,29 @@ def _read_input(path: Path, sheet: str | int) -> pd.DataFrame:
 
 
 def _valid_rows(df: pd.DataFrame, schema: DataFrameSchema) -> pd.DataFrame:
-    valid_positions: list[int] = []
+    valid_rows: list[pd.DataFrame] = []
+    integer_columns = ("customer_id", "age")
     for position in range(len(df)):
+        candidate = df.iloc[[position]].copy()
+        for column in integer_columns:
+            if column not in candidate.columns:
+                continue
+            value = candidate.iloc[0][column]
+            if pd.isna(value):
+                continue
+            numeric = pd.to_numeric(value, errors="coerce")
+            if pd.notna(numeric) and float(numeric).is_integer():
+                candidate[column] = pd.Series(
+                    [int(numeric)], index=candidate.index, dtype="int64"
+                )
         try:
-            schema.validate(df.iloc[[position]], lazy=True)
+            schema.validate(candidate, lazy=True)
         except SchemaErrors:
             continue
-        valid_positions.append(position)
-    return df.iloc[valid_positions].copy()
+        valid_rows.append(candidate)
+    if not valid_rows:
+        return df.iloc[0:0].copy()
+    return pd.concat(valid_rows, axis=0).copy()
 
 
 def run_validation(path: str, sheet: str | int, out_dir: str) -> bool:

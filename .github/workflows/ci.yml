@@ -42,6 +42,7 @@ jobs:
           set +e
           python -m dq_suite run --input examples/customers.xlsx --sheet Customers --out outputs
           status=$?
+          set -e
           if [ "$status" -ne 1 ]; then
             echo "Expected the intentionally invalid demo dataset to return exit code 1; got $status"
             exit 1

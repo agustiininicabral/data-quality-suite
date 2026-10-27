@@ -43,7 +43,7 @@ def test_duplicate_headers_after_normalization_are_rejected(tmp_path: Path) -> N
 def test_empty_dataset_fails_validation(tmp_path: Path) -> None:
     source = tmp_path / "empty.csv"
     source.write_text(
-        "customer_id,email,country,age,created_at,segment\\n",
+        "customer_id,email,country,age,created_at,segment" + chr(10),
         encoding="utf-8",
     )
     output = tmp_path / "out"

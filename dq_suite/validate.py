@@ -3,8 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 
 import pandas as pd
-import pandera as pa
-from pandera import Check, Column, DataFrameSchema
+import pandera.pandas as pa
+from pandera.pandas import Check, Column, DataFrameSchema
 from pandera.errors import SchemaErrors
 
 

@@ -7,6 +7,13 @@ import pandas as pd
 from .validate import run_validation
 
 
+def _parse_sheet(value: str) -> str | int:
+    try:
+        return int(value)
+    except ValueError:
+        return value
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         prog="dq_suite",
@@ -16,7 +23,9 @@ def main() -> int:
 
     run_parser = subparsers.add_parser("run", help="Run validation")
     run_parser.add_argument("--input", required=True, help="Path to Excel/CSV")
-    run_parser.add_argument("--sheet", default=0, help="Excel sheet name/index")
+    run_parser.add_argument(
+        "--sheet", type=_parse_sheet, default=0, help="Excel sheet name/index"
+    )
     run_parser.add_argument("--out", default="outputs", help="Output folder")
 
     args = parser.parse_args()

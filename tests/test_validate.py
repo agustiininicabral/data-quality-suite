@@ -140,3 +140,30 @@ def test_cli_returns_two_for_unsupported_file_type(
 
     assert main() == 2
     assert "CSV or Excel" in capsys.readouterr().err
+
+
+def test_cli_parses_numeric_sheet_argument_as_index(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    source = tmp_path / "customers.xlsx"
+    with pd.ExcelWriter(source, engine="openpyxl") as writer:
+        pd.DataFrame([_valid_customer()]).to_excel(
+            writer, sheet_name="Customers", index=False
+        )
+    output = tmp_path / "outputs"
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "dq_suite",
+            "run",
+            "--input",
+            str(source),
+            "--sheet",
+            "0",
+            "--out",
+            str(output),
+        ],
+    )
+
+    assert main() == 0
+    assert "## Result: PASS" in (output / "validation_report.md").read_text()

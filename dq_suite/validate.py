@@ -66,6 +66,33 @@ def run_validation(path: str, sheet: str | int, out_dir: str) -> bool:
     if "created_at" in df.columns:
         df["created_at"] = pd.to_datetime(df["created_at"], errors="coerce")
 
+    if df.empty:
+        report_path = output_dir / "validation_report.md"
+        report_path.write_text(
+            "\n".join(
+                [
+                    "# Data Quality Validation Report",
+                    "",
+                    f"- Input: **{input_path}**",
+                    "- Rows received: **0**",
+                    "",
+                    "## Result: FAIL",
+                    "",
+                    "- Valid rows: **0**",
+                    "- Rejected rows: **0**",
+                    "- Reason: Input contains no data rows.",
+                    "",
+                ]
+            ),
+            encoding="utf-8",
+        )
+        cleaned_path = output_dir / "cleaned.xlsx"
+        df.to_excel(cleaned_path, index=False, engine="openpyxl")
+        print("FAIL - Input contains no data rows.")
+        print(f"- {report_path}")
+        print(f"- {cleaned_path}")
+        return False
+
     schema = _schema()
     report_md = [
         "# Data Quality Validation Report",

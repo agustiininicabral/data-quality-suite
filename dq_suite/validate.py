@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pandas as pd
 import pandera.pandas as pa
-from pandera.pandas import Check, Column, DataFrameSchema
 from pandera.errors import SchemaErrors
+from pandera.pandas import Check, Column, DataFrameSchema
 
 
 def _schema() -> DataFrameSchema:
@@ -17,15 +17,11 @@ def _schema() -> DataFrameSchema:
                 Check.str_matches(r"^[^@\s]+@[^@\s]+\.[^@\s]+$"),
                 nullable=False,
             ),
-            "country": Column(
-                str, Check.isin(["AR", "ES", "UY", "CL"]), nullable=False
-            ),
+            "country": Column(str, Check.isin(["AR", "ES", "UY", "CL"]), nullable=False),
             "age": Column(int, Check.between(16, 90), nullable=False),
             "created_at": Column(pa.DateTime, nullable=False),
             "segment": Column(
-                str,
-                Check.isin(["Retail", "Online", "Wholesale"]),
-                nullable=False,
+                str, Check.isin(["Retail", "Online", "Wholesale"]), nullable=False
             ),
         },
         strict=False,
@@ -52,7 +48,7 @@ def _valid_rows(df: pd.DataFrame, schema: DataFrameSchema) -> pd.DataFrame:
 
 
 def run_validation(path: str, sheet: str | int, out_dir: str) -> bool:
-    """Validate a dataset, write the report and valid rows, and return pass/fail."""
+    """Validate input, write a report and valid rows, and return pass/fail."""
     input_path = Path(path)
     if not input_path.is_file():
         raise FileNotFoundError(f"Input file not found: {input_path}")
@@ -62,6 +58,11 @@ def run_validation(path: str, sheet: str | int, out_dir: str) -> bool:
 
     df = _read_input(input_path, sheet)
     df.columns = [str(column).strip().lower() for column in df.columns]
+    duplicates = sorted({column for column in df.columns if list(df.columns).count(column) > 1})
+    if duplicates:
+        raise ValueError(
+            "Duplicate column names after normalization: " + ", ".join(duplicates)
+        )
     if "created_at" in df.columns:
         df["created_at"] = pd.to_datetime(df["created_at"], errors="coerce")
 
@@ -70,24 +71,34 @@ def run_validation(path: str, sheet: str | int, out_dir: str) -> bool:
         "# Data Quality Validation Report",
         "",
         f"- Input: **{input_path}**",
-        f"- Rows: **{len(df)}**",
+        f"- Rows received: **{len(df)}**",
         "",
     ]
 
     try:
         valid_df = schema.validate(df, lazy=True)
         passed = True
-        report_md.extend(["## Result: PASS", ""])
+        report_md.extend(["## Result: PASS", "", f"- Valid rows: **{len(valid_df)}**", "- Rejected rows: **0**", ""])
     except SchemaErrors as error:
         passed = False
-        report_md.extend(["## Result: FAIL", "", "### Failure cases (top 50)", ""])
-        report_md.append(error.failure_cases.head(50).to_markdown(index=False))
-        report_md.append("")
         valid_df = _valid_rows(df, schema)
+        rejected_count = len(df) - len(valid_df)
+        report_md.extend(
+            [
+                "## Result: FAIL",
+                "",
+                f"- Valid rows: **{len(valid_df)}**",
+                f"- Rejected rows: **{rejected_count}**",
+                "",
+                "### Failure cases (top 50)",
+                "",
+                error.failure_cases.head(50).to_markdown(index=False),
+                "",
+            ]
+        )
 
     report_path = output_dir / "validation_report.md"
     report_path.write_text("\n".join(report_md), encoding="utf-8")
-
     cleaned_path = output_dir / "cleaned.xlsx"
     valid_df.to_excel(cleaned_path, index=False, engine="openpyxl")
 

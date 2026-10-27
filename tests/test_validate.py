@@ -100,7 +100,9 @@ def test_cli_returns_zero_when_dataset_passes_validation(
     assert main() == 0
 
 
-def test_valid_integer_rows_survive_mixed_numeric_and_invalid_ids(tmp_path: Path) -> None:
+def test_valid_integer_rows_survive_mixed_numeric_and_invalid_ids(
+    tmp_path: Path,
+) -> None:
     source = tmp_path / "mixed_ids.csv"
     output = tmp_path / "outputs"
     valid = _valid_customer()

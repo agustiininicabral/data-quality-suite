@@ -17,7 +17,9 @@ def _schema() -> DataFrameSchema:
                 Check.str_matches(r"^[^@\s]+@[^@\s]+\.[^@\s]+$"),
                 nullable=False,
             ),
-            "country": Column(str, Check.isin(["AR", "ES", "UY", "CL"]), nullable=False),
+            "country": Column(
+                str, Check.isin(["AR", "ES", "UY", "CL"]), nullable=False
+            ),
             "age": Column(int, Check.between(16, 90), nullable=False),
             "created_at": Column(pa.DateTime, nullable=False),
             "segment": Column(
@@ -58,7 +60,9 @@ def run_validation(path: str, sheet: str | int, out_dir: str) -> bool:
 
     df = _read_input(input_path, sheet)
     df.columns = [str(column).strip().lower() for column in df.columns]
-    duplicates = sorted({column for column in df.columns if list(df.columns).count(column) > 1})
+    duplicates = sorted(
+        {column for column in df.columns if list(df.columns).count(column) > 1}
+    )
     if duplicates:
         raise ValueError(
             "Duplicate column names after normalization: " + ", ".join(duplicates)
@@ -105,7 +109,15 @@ def run_validation(path: str, sheet: str | int, out_dir: str) -> bool:
     try:
         valid_df = schema.validate(df, lazy=True)
         passed = True
-        report_md.extend(["## Result: PASS", "", f"- Valid rows: **{len(valid_df)}**", "- Rejected rows: **0**", ""])
+        report_md.extend(
+            [
+                "## Result: PASS",
+                "",
+                f"- Valid rows: **{len(valid_df)}**",
+                "- Rejected rows: **0**",
+                "",
+            ]
+        )
     except SchemaErrors as error:
         passed = False
         valid_df = _valid_rows(df, schema)

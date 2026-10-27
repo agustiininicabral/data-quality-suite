@@ -38,7 +38,14 @@ jobs:
         run: python -m pytest -q
 
       - name: Run demo validation
-        run: python -m dq_suite run --input examples/customers.xlsx --sheet Customers --out outputs
+        run: |
+          set +e
+          python -m dq_suite run --input examples/customers.xlsx --sheet Customers --out outputs
+          status=$?
+          if [ -f outputs/validation_report.md ]; then
+            cat outputs/validation_report.md
+          fi
+          exit "$status"
 
       - name: Upload validation outputs
         if: always() && hashFiles('outputs/*') != ''

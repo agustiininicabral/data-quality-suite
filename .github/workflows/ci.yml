@@ -1,31 +1,61 @@
-name: Data Quality Suite (pandera)
+name: Data Quality Suite
 
 on:
   push:
   pull_request:
 
-jobs:
-  run:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+permissions:
+  contents: read
 
-      - name: Setup Python
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
 
-      - name: Install
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+      - name: Install dependencies
+        run: python -m pip install -r requirements-dev.txt
+
+      - name: Check dependency consistency
+        run: python -m pip check
+
+      - name: Check Python formatting
+        run: ruff format --check dq_suite tests
+
+      - name: Run Ruff lint checks
+        run: ruff check dq_suite tests
+
+      - name: Run unit tests
+        run: python -m pytest -q
 
       - name: Run demo validation
         run: |
+          set +e
           python -m dq_suite run --input examples/customers.xlsx --sheet Customers --out outputs
+          status=$?
+          set -e
+          if [ "$status" -ne 1 ]; then
+            echo "Expected the intentionally invalid demo dataset to return exit code 1; got $status"
+            exit 1
+          fi
+          grep -q "## Result: FAIL" outputs/validation_report.md
+          test -s outputs/cleaned.xlsx
+          cat outputs/validation_report.md
 
-      - name: Upload outputs
+      - name: Upload validation outputs
+        if: always() && hashFiles('outputs/*') != ''
         uses: actions/upload-artifact@v4
         with:
-          name: outputs
-          path: outputs
+          name: data-quality-validation-report
+          path: outputs/
+          if-no-files-found: warn
+          retention-days: 7

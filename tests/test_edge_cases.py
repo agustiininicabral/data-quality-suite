@@ -38,3 +38,18 @@ def test_duplicate_headers_after_normalization_are_rejected(tmp_path: Path) -> N
 
     with pytest.raises(ValueError, match="Duplicate column names after normalization: email"):
         run_validation(str(source), 0, str(tmp_path / "out"))
+
+
+def test_empty_dataset_fails_validation(tmp_path: Path) -> None:
+    source = tmp_path / "empty.csv"
+    source.write_text(
+        "customer_id,email,country,age,created_at,segment\\n",
+        encoding="utf-8",
+    )
+    output = tmp_path / "out"
+
+    assert run_validation(str(source), 0, str(output)) is False
+    report = (output / "validation_report.md").read_text(encoding="utf-8")
+    assert "## Result: FAIL" in report
+    assert "Input contains no data rows" in report
+    assert pd.read_excel(output / "cleaned.xlsx").empty

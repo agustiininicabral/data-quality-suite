@@ -17,7 +17,9 @@ def _schema() -> DataFrameSchema:
                 Check.str_matches(r"^[^@\s]+@[^@\s]+\.[^@\s]+$"),
                 nullable=False,
             ),
-            "country": Column(str, Check.isin(["AR", "ES", "UY", "CL"]), nullable=False),
+            "country": Column(
+                str, Check.isin(["AR", "ES", "UY", "CL"]), nullable=False
+            ),
             "age": Column(int, Check.between(16, 90), nullable=False),
             "created_at": Column(pa.DateTime, nullable=False),
             "segment": Column(

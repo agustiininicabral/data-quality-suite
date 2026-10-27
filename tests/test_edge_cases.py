@@ -36,7 +36,9 @@ def test_duplicate_headers_after_normalization_are_rejected(tmp_path: Path) -> N
         [{"customer_id": 1, "Email": "one@example.com", " email ": "two@example.com"}]
     ).to_csv(source, index=False)
 
-    with pytest.raises(ValueError, match="Duplicate column names after normalization: email"):
+    with pytest.raises(
+        ValueError, match="Duplicate column names after normalization: email"
+    ):
         run_validation(str(source), 0, str(tmp_path / "out"))
 
 

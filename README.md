@@ -28,7 +28,7 @@ El comando genera:
 - `outputs/validation_report.md`: resultado PASS/FAIL y hasta 50 casos de error.
 - `outputs/cleaned.xlsx`: filas que cumplen el esquema. Si falta una columna requerida, ninguna fila se considera válida.
 
-El proceso devuelve código de salida `0` si todas las filas cumplen el esquema y `1` si hay errores de validación. Los errores de entrada (archivo inexistente o extensión no compatible) se muestran como excepciones en lugar de confundirse con un resultado PASS/FAIL.
+El proceso devuelve código de salida `0` si todas las filas cumplen el esquema y `1` si hay errores de validación. El archivo de ejemplo contiene errores intencionales para demostrar el reporte FAIL y el filtrado de filas; por eso, la ejecución de demo termina con código `1` de forma esperada. Los errores de entrada (archivo inexistente o extensión no compatible) se muestran como excepciones en lugar de confundirse con un resultado PASS/FAIL.
 
 ## Reglas de calidad
 

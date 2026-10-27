@@ -42,10 +42,13 @@ jobs:
           set +e
           python -m dq_suite run --input examples/customers.xlsx --sheet Customers --out outputs
           status=$?
-          if [ -f outputs/validation_report.md ]; then
-            cat outputs/validation_report.md
+          if [ "$status" -ne 1 ]; then
+            echo "Expected the intentionally invalid demo dataset to return exit code 1; got $status"
+            exit 1
           fi
-          exit "$status"
+          grep -q "## Result: FAIL" outputs/validation_report.md
+          test -s outputs/cleaned.xlsx
+          cat outputs/validation_report.md
 
       - name: Upload validation outputs
         if: always() && hashFiles('outputs/*') != ''

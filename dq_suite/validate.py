@@ -63,6 +63,7 @@ def _valid_rows(df: pd.DataFrame, schema: DataFrameSchema) -> pd.DataFrame:
         return df.iloc[0:0].copy()
     return pd.concat(valid_rows, axis=0).copy()
 
+
 def run_validation(path: str, sheet: str | int, out_dir: str) -> bool:
     """Validate input, write a report and valid rows, and return pass/fail."""
     input_path = Path(path)
